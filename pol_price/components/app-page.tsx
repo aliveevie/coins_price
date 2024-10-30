@@ -126,7 +126,10 @@ export default function CryptoPriceDashboard() {
               >
                 <CardHeader>
                   <div className="flex items-center gap-2 mb-2">
-                    <crypto.icon className="h-5 w-5" />
+                  <span className="h-5 w-5">
+                     <crypto.icon />
+                  </span>
+
                     <CardTitle className="text-xl">{crypto.name}</CardTitle>
                   </div>
                   <div className="flex items-baseline gap-2">
