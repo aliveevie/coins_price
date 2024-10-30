@@ -1,49 +1,24 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ethers } from 'ethers'
+import { useAccount, useChainId, useSwitchChain } from 'wagmi'
+import { ConnectKitButton } from 'connectkit'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { mumbaiConfig } from '../config/mumbai'
+import { web3Config, polygonZkEvmCardona } from '../config/web3Config'
+import { WagmiConfig } from 'wagmi'
 
-export function Page() {
+export default function PolygonPriceChecker() {
   const [price, setPrice] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [account, setAccount] = useState<string | null>(null)
-  const [chainId, setChainId] = useState<number | null>(null)
 
-  const connectWallet = async () => {
-    if (typeof window.ethereum !== 'undefined') {
-      try {
-        // Request account access
-        await window.ethereum.request({ method: 'eth_requestAccounts' })
-        const provider = new ethers.providers.Web3Provider(window.ethereum)
-        const signer = provider.getSigner()
-        const address = await signer.getAddress()
-        const network = await provider.getNetwork()
-        
-        setAccount(address)
-        setChainId(network.chainId)
-
-        // Check if the connected network is Mumbai testnet
-        if (network.chainId !== mumbaiConfig.chainId) {
-          setError('Please connect to the Polygon Mumbai testnet')
-        } else {
-          setError(null)
-          await fetchPolygonPrice()
-        }
-      } catch (err) {
-        console.error('Failed to connect wallet:', err)
-        setError('Failed to connect wallet')
-      }
-    } else {
-      setError('Please install MetaMask')
-    }
-  }
+  const { address, isConnected } = useAccount()
+  const chainId = useChainId()
+  const { switchChain } = useSwitchChain()
 
   const fetchPolygonPrice = async () => {
-    if (!account) return
+    if (!isConnected || chainId !== polygonZkEvmCardona.id) return
     
     setLoading(true)
     setError(null)
@@ -60,68 +35,59 @@ export function Page() {
   }
 
   useEffect(() => {
-    if (typeof window.ethereum !== 'undefined') {
-      window.ethereum.on('accountsChanged', (accounts: string[]) => {
-        setAccount(accounts[0] || null)
-        setPrice(null)
-      })
-      window.ethereum.on('chainChanged', (chainId: string) => {
-        setChainId(parseInt(chainId, 16))
-        setPrice(null)
-      })
+    if (isConnected && chainId === polygonZkEvmCardona.id) {
+      fetchPolygonPrice()
+    } else {
+      setPrice(null)
     }
-
-    return () => {
-      if (typeof window.ethereum !== 'undefined') {
-        window.ethereum.removeAllListeners()
-      }
-    }
-  }, [])
+  }, [isConnected, chainId])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">Polygon (MATIC) Price Checker</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {!account ? (
-            <Button onClick={connectWallet} className="w-full">
-              Connect Wallet
-            </Button>
-          ) : chainId !== mumbaiConfig.chainId ? (
-            <p className="text-center text-red-500">Please connect to the Polygon Mumbai testnet</p>
-          ) : loading ? (
-            <p className="text-center">Loading...</p>
-          ) : error ? (
-            <p className="text-center text-red-500">{error}</p>
-          ) : price ? (
-            <>
-              <p className="text-4xl font-bold text-center mb-4">${price}</p>
+    <WagmiConfig config={web3Config}>
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold text-center">Polygon (MATIC) Price Checker</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!isConnected ? (
+              <ConnectKitButton />
+            ) : chainId !== polygonZkEvmCardona.id ? (
+              <Button onClick={() => switchChain({ chainId: polygonZkEvmCardona.id })} className="w-full">
+                Switch to Polygon zkEVM Cardona
+              </Button>
+            ) : loading ? (
+              <p className="text-center">Loading...</p>
+            ) : error ? (
+              <p className="text-center text-red-500">{error}</p>
+            ) : price ? (
+              <>
+                <p className="text-4xl font-bold text-center mb-4">${price}</p>
+                <Button 
+                  onClick={fetchPolygonPrice} 
+                  className="w-full"
+                  disabled={loading}
+                >
+                  Refresh Price
+                </Button>
+              </>
+            ) : (
               <Button 
                 onClick={fetchPolygonPrice} 
                 className="w-full"
                 disabled={loading}
               >
-                Refresh Price
+                Fetch Price
               </Button>
-            </>
-          ) : (
-            <Button 
-              onClick={fetchPolygonPrice} 
-              className="w-full"
-              disabled={loading}
-            >
-              Fetch Price
-            </Button>
-          )}
-          {account && (
-            <p className="mt-4 text-center text-sm text-gray-500">
-              Connected: {account.slice(0, 6)}...{account.slice(-4)}
-            </p>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+            )}
+            {address && (
+              <p className="mt-4 text-center text-sm text-gray-500">
+                Connected: {address.slice(0, 6)}...{address.slice(-4)}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </WagmiConfig>
   )
 }
