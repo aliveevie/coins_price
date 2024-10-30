@@ -10,10 +10,9 @@ export default function PolygonPriceChecker() {
 
   const fetchPolygonPrice = async () => {
     try {
-      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=polygon-pos&vs_currencies=usd')
+      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=matic-network&vs_currencies=usd')
       const data = await response.json()
-      console.log(data)
-      setPrice(data['polygon-pos'].usd.toFixed(2))
+      setPrice(data['matic-network'].usd.toFixed(2))
     } catch (err) {
       console.error(err)
     }
@@ -27,7 +26,11 @@ export default function PolygonPriceChecker() {
 
   return (
     <div className="flex flex-col items-center justify-center gap-4 p-4">
-      {price && <p className="text-4xl font-bold">${price}</p>}
+      {isConnected ? (
+        price && <p className="text-4xl font-bold">${price}</p>
+      ) : (
+        <p className="text-lg text-muted-foreground">Please connect your wallet to see the price</p>
+      )}
       <ConnectKitButton />
     </div>
   )

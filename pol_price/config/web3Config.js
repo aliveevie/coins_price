@@ -13,12 +13,12 @@ const config = createConfig(
    transports: {
      // RPC URL for each chain
      [polygonZkEvmCardona.id]: http(
-`https://eth-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`
+`https://eth-mainnet.g.alchemy.com/v2/jO7iiEdAJwT1OTZEGOi9W2v8zn_OeVTB`
      ),
    },
    // Required API Keys
    walletConnectProjectId:
-     process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? '',
+    "jO7iiEdAJwT1OTZEGOi9W2v8zn_OeVTB" ?? '',
    // Required App Info
    appName: 'React to Web3 Bootcamp',
    // Optional App Info
